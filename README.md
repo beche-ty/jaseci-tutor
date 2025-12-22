@@ -1,4 +1,4 @@
-# learning_paltform
+# learning_platform
 
 ## Running Jac Code
 
