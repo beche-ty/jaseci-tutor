@@ -27,7 +27,7 @@
 ## 📁 Project Structure
 
 ```
-learnplatform/
+learning_platform/
 ├── app.jac                  # Main Jaseci application file
 ├── frontend/                # Frontend components (JSX-like syntax)
 │   ├── components/
@@ -62,8 +62,8 @@ learnplatform/
 ### Installation
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/learnplatform.git
-   cd learnplatform
+   [git clone https://github.com/beche-ty/jaseci-tutor.git
+   cd learning_platform
    ```
 
 2. **Set up Jaseci environment**
@@ -73,13 +73,13 @@ learnplatform/
 
    
    # Initialize Jaseci
-   jsctl -m
+   jac run app.jac
    ```
 
 3. **Load the application**
    ```bash
-   # From within jsctl
-   jac load app.jac
+   # From within 
+   jac run app.jac
    ```
 
 4. **Run the development server**
