@@ -1880,7 +1880,7 @@ cl {
         def loadBookChapters(bookId: str) -> any {
             async def loadChapters() -> None {
                 if userInfo and userInfo.email {
-                    chaptersResult = root spawn get_student_book_chapters(
+                    chaptersResult = root spawn get_chapter_for_student(
                         user_email=userInfo.email, 
                         book_id=bookId
                     );
@@ -2116,19 +2116,19 @@ cl {
                                                                             "justifyContent": "space-between",
                                                                             "alignItems": "center"
                                                                         }}
-                                                                        onClick={lambda: window.location.href = "/chapter/" + chapter.id}
+                                                                        onClick={ window.location.href ( "/chapter/" + chapter.id)}
                                                                     >
                                                                         <span style={{"fontSize": "14px", "color": "#374151"}}>
                                                                             {chapter.order}. {chapter.title}
                                                                         </span>
                                                                         <span style={{"fontSize": "12px", "color": "#9ca3af"}}>
-                                                                            {chapter.is_published ? "Published" : "Draft"}
+                                                                            {"Published" if chapter.is_published else {"Draft"}}
                                                                         </span>
                                                                     </div>;
                                                                 })}
                                                             </div>
                                                         }
-                                                        {(!book.chapters or book.chapters.length == 0) and 
+                                                        {( not book.chapters or book.chapters.length == 0) and 
                                                             <div style={{"color": "#9ca3af", "fontSize": "14px", "textAlign": "center", "padding": "10px"}}>
                                                                 No chapters available
                                                             </div>
@@ -2137,7 +2137,7 @@ cl {
                                                 }
                                                 
                                                 # Load chapters button
-                                                {!book.chaptersLoaded and 
+                                                {not book.chaptersLoaded and 
                                                     <button 
                                                         onClick={lambda: loadBookChapters(book.id)}
                                                         style={{
@@ -2157,7 +2157,7 @@ cl {
                                                 
                                                 # View book button
                                                 <button 
-                                                    onClick={lambda: window.location.href = "/book/" + book.id}
+                                                    onClick={window.location.href ('/books/' + book.id)}
                                                     style={{
                                                         "width": "100%",
                                                         "marginTop": "15px",
@@ -2497,7 +2497,7 @@ cl {
                     <Route path="/signup" element={<SignupPage />} />
                     
                     # Student Routes
-                    <Route path="/dashboard" element={<DashboardPage />} />
+                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/lessons" element={<DashboardPage />} />
                     <Route path="/progress" element={<DashboardPage />} />
                     

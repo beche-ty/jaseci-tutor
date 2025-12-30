@@ -635,7 +635,9 @@ function DashboardPage() {
   let [userInfo, setUserInfo] = useState(null);
   let [stats, setStats] = useState({"progressPercent": 0, "avgScore": 0, "completedLessons": 0, "totalLessons": 0, "streakDays": 0});
   let [recentLessons, setRecentLessons] = useState([]);
+  let [books, setBooks] = useState([]);
   let [loading, setLoading] = useState(true);
+  let [activeTab, setActiveTab] = useState("overview");
   useEffect(() => {
     async function loadUserInfo() {
       let currentSessionId = localStorage.getItem("session_id");
@@ -655,6 +657,7 @@ function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       if (userInfo && userInfo.email) {
+        setLoading(true);
         let statsResult = await __jacSpawn("get_student_progress_summary", "", {"user_email": userInfo.email});
         if (statsResult.reports && statsResult.reports.length > 0) {
           let statsData = statsResult.reports[0];
@@ -664,15 +667,41 @@ function DashboardPage() {
         if (lessonsResult.reports && lessonsResult.reports.length > 0) {
           setRecentLessons(lessonsResult.reports[0]);
         }
+        let booksResult = await __jacSpawn("get_student_books", "", {"user_email": userInfo.email});
+        if (booksResult.reports && booksResult.reports.length > 0) {
+          setBooks(booksResult.reports[0]);
+        }
         setLoading(false);
       }
     }
     loadData();
   }, [userInfo]);
+  function loadBookChapters(bookId) {
+    async function loadChapters() {
+      if (userInfo && userInfo.email) {
+        let chaptersResult = await __jacSpawn("get_chapter_for_student", "", {"user_email": userInfo.email, "book_id": bookId});
+        if (chaptersResult.reports && chaptersResult.reports.length > 0) {
+          setBooks(prevBooks => {
+            let updatedBooks = [];
+            for (const book of prevBooks) {
+              if (book.id === bookId) {
+                let updatedBook = {"id": book.id, "title": book.title, "description": book.description, "subject": book.subject, "color": book.color, "created_by": book.created_by, "chapter_count": book.chapter_count, "chapters": chaptersResult.reports[0], "chaptersLoaded": true};
+                updatedBooks.append(updatedBook);
+              } else {
+                updatedBooks.append(book);
+              }
+              return updatedBooks;
+            }
+          });
+        }
+      }
+    }
+    loadChapters();
+  }
   if (loading || !userInfo) {
     return __jacJsx("div", {"style": {"minHeight": "100vh", "backgroundColor": "#f9fafb"}}, [__jacJsx(StudentNavigation, {}, []), __jacJsx("div", {"style": {"display": "flex"}}, [__jacJsx(StudentSidebar, {}, []), __jacJsx("div", {"style": {"flex": "1", "padding": "30px"}}, [__jacJsx("h1", {"style": {"color": "#1f2937", "marginBottom": "30px"}}, ["Loading..."]), __jacJsx("div", {}, ["Please wait while we load your dashboard..."])])])]);
   }
-  return __jacJsx("div", {"style": {"minHeight": "100vh", "backgroundColor": "#f9fafb"}}, [__jacJsx(StudentNavigation, {}, []), __jacJsx("div", {"style": {"display": "flex"}}, [__jacJsx(StudentSidebar, {}, []), __jacJsx("div", {"style": {"flex": "1", "padding": "30px"}}, [__jacJsx("h1", {"style": {"color": "#1f2937", "marginBottom": "30px"}}, ["Welcome back, ", userInfo.name, "!"]), __jacJsx("div", {"style": {"display": "grid", "gridTemplateColumns": "repeat(2, 1fr)", "gap": "20px", "marginBottom": "30px"}}, [__jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Overall Progress"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#4361ee"}}, [stats.progressPercent, "%"]), __jacJsx("div", {"style": {"height": "8px", "background": "#e5e7eb", "borderRadius": "4px", "marginTop": "10px", "overflow": "hidden"}}, [__jacJsx("div", {"style": {"width": new Set([stats.progressPercent]) + "%", "height": "100%", "background": "#4361ee"}}, [])])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Average Score"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#10b981"}}, [stats.avgScore, "%"])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Completed Lessons"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#f59e0b"}}, [stats.completedLessons, "/", stats.totalLessons])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Active Streak"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#ef4444"}}, [stats.streakDays, " days"])])]), __jacJsx("div", {"style": {"background": "white", "padding": "25px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)", "marginBottom": "30px"}}, [__jacJsx("h2", {"style": {"color": "#1f2937", "marginBottom": "20px"}}, ["Continue Learning"]), __jacJsx("div", {"style": {"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(250px, 1fr))", "gap": "15px"}}, [recentLessons.length > 0 && recentLessons.map(lesson => {
+  return __jacJsx("div", {"style": {"minHeight": "100vh", "backgroundColor": "#f9fafb"}}, [__jacJsx(StudentNavigation, {}, []), __jacJsx("div", {"style": {"display": "flex"}}, [__jacJsx(StudentSidebar, {}, []), __jacJsx("div", {"style": {"flex": "1", "padding": "30px"}}, [__jacJsx("div", {"style": {"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "30px"}}, [__jacJsx("h1", {"style": {"color": "#1f2937", "margin": "0"}}, ["Welcome back, ", userInfo.name, "!"]), __jacJsx("div", {"style": {"display": "flex", "gap": "10px", "background": "#e5e7eb", "padding": "5px", "borderRadius": "8px"}}, [__jacJsx("button", {"onClick": () => setActiveTab("overview"), "style": {"padding": "8px 16px", "background": activeTab === "overview" ? "white" : "transparent", "border": "none", "borderRadius": "6px", "cursor": "pointer", "fontWeight": activeTab === "overview" ? "bold" : "normal", "color": activeTab === "overview" ? "#1f2937" : "#6b7280"}}, ["Overview"]), __jacJsx("button", {"onClick": () => setActiveTab("books"), "style": {"padding": "8px 16px", "background": activeTab === "books" ? "white" : "transparent", "border": "none", "borderRadius": "6px", "cursor": "pointer", "fontWeight": activeTab === "books" ? bold : "normal", "color": activeTab === "books" ? "#1f2937" : "#6b7280"}}, ["My Books (", books.length, ")"])])]), activeTab === "overview" && __jacJsx(null, {}, [__jacJsx("div", {"style": {"display": "grid", "gridTemplateColumns": "repeat(2, 1fr)", "gap": "20px", "marginBottom": "30px"}}, [__jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Overall Progress"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#4361ee"}}, [stats.progressPercent, "%"]), __jacJsx("div", {"style": {"height": "8px", "background": "#e5e7eb", "borderRadius": "4px", "marginTop": "10px", "overflow": "hidden"}}, [__jacJsx("div", {"style": {"width": new Set([stats.progressPercent]) + "%", "height": "100%", "background": "#4361ee"}}, [])])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Average Score"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#10b981"}}, [stats.avgScore, "%"])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Completed Lessons"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#f59e0b"}}, [stats.completedLessons, "/", stats.totalLessons])]), __jacJsx("div", {"style": {"background": "white", "padding": "20px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["Active Streak"]), __jacJsx("div", {"style": {"fontSize": "32px", "fontWeight": "bold", "color": "#ef4444"}}, [stats.streakDays, " days"])])]), __jacJsx("div", {"style": {"background": "white", "padding": "25px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)", "marginBottom": "30px"}}, [__jacJsx("h2", {"style": {"color": "#1f2937", "marginBottom": "20px"}}, ["Continue Learning"]), __jacJsx("div", {"style": {"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(250px, 1fr))", "gap": "15px"}}, [recentLessons.length > 0 && recentLessons.map(lesson => {
     let lessonScore = "";
     if (lesson.is_completed && lesson.progress) {
       lessonScore = Math.round(lesson.progress.score * 100) + "%";
@@ -692,7 +721,11 @@ function DashboardPage() {
     return __jacJsx("div", {"key": lesson.id, "style": {"padding": "15px", "border": "1px solid #e5e7eb", "borderRadius": "8px", "cursor": "pointer"}, "onClick": () => {
       window.location.href = "/lesson/" + lesson.id;
     }}, [__jacJsx("h4", {"style": {"color": "#1f2937", "marginBottom": "8px"}}, [lesson.title]), __jacJsx("div", {"style": {"display": "flex", "justifyContent": "space-between", "alignItems": "center"}}, [__jacJsx("span", {"style": {"background": badgeBackgroundValue, "color": badgeColorValue, "borderRadius": "12px", "fontSize": "12px", "padding": "3px 8px"}}, [badgeTextValue]), __jacJsx("span", {"style": {"color": "#6b7280", "fontSize": "12px"}}, [lessonScore])])]);
-  }), recentLessons.length === 0 && __jacJsx("div", {}, ["No lessons available"])])])])])]);
+  }), recentLessons.length === 0 && __jacJsx("div", {}, ["No lessons available"])])])]), activeTab === "books" && __jacJsx("div", {"style": {"background": "white", "padding": "25px", "borderRadius": "10px", "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"}}, [__jacJsx("h2", {"style": {"color": "#1f2937", "marginBottom": "20px"}}, ["My Books"]), books.length > 0 && __jacJsx("div", {"style": {"display": "grid", "gridTemplateColumns": "repeat(auto-fill, minmax(300px, 1fr))", "gap": "20px"}}, [books.map(book => {
+    return __jacJsx("div", {"key": book.id, "style": {"border": "1px solid #e5e7eb", "borderRadius": "10px", "overflow": "hidden", "background": "white"}}, [__jacJsx("div", {"style": {"height": "120px", "background": book.color || "#4361ee", "display": "flex", "alignItems": "center", "justifyContent": "center"}}, [__jacJsx("span", {"style": {"color": "white", "fontSize": "32px", "fontWeight": "bold"}}, [book.title.slice(0, 1).toUpperCase()])]), __jacJsx("div", {"style": {"padding": "20px"}}, [__jacJsx("h3", {"style": {"color": "#1f2937", "marginBottom": "10px"}}, [book.title]), __jacJsx("p", {"style": {"color": "#6b7280", "fontSize": "14px", "marginBottom": "15px"}}, [book.description || "No description"]), __jacJsx("div", {"style": {"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "15px"}}, [__jacJsx("span", {"style": {"color": "#9ca3af", "fontSize": "12px"}}, [book.chapter_count || 0, " chapters"]), __jacJsx("span", {"style": {"color": "#9ca3af", "fontSize": "12px"}}, ["Subject: ", book.subject || "General"])]), book.chaptersLoaded && __jacJsx("div", {"style": {"marginTop": "15px", "borderTop": "1px solid #e5e7eb", "paddingTop": "15px"}}, [__jacJsx("h4", {"style": {"color": "#4b5563", "fontSize": "14px", "marginBottom": "10px"}}, ["Chapters:"]), book.chapters && book.chapters.length > 0 && __jacJsx("div", {"style": {"display": "flex", "flexDirection": "column", "gap": "8px"}}, [book.chapters.map(chapter => {
+      return __jacJsx("div", {"key": chapter.id, "style": {"padding": "8px", "background": "#f9fafb", "borderRadius": "6px", "cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center"}, "onClick": window.location.href("/chapter/" + chapter.id)}, [__jacJsx("span", {"style": {"fontSize": "14px", "color": "#374151"}}, [chapter.order, ". ", chapter.title]), __jacJsx("span", {"style": {"fontSize": "12px", "color": "#9ca3af"}}, [chapter.is_published ? "Published" : new Set(["Draft"])])]);
+    })]), !book.chapters || book.chapters.length === 0 && __jacJsx("div", {"style": {"color": "#9ca3af", "fontSize": "14px", "textAlign": "center", "padding": "10px"}}, ["No chapters available"])]), !book.chaptersLoaded && __jacJsx("button", {"onClick": () => loadBookChapters(book.id), "style": {"width": "100%", "padding": "10px", "background": "#f3f4f6", "border": "1px solid #d1d5db", "borderRadius": "6px", "color": "#4b5563", "cursor": "pointer", "fontSize": "14px"}}, ["Show Chapters"]), __jacJsx("button", {"onClick": window.location.href("/books/" + book.id), "style": {"width": "100%", "marginTop": "15px", "padding": "10px", "background": "#4361ee", "color": "white", "border": "none", "borderRadius": "6px", "cursor": "pointer", "fontWeight": "bold"}}, ["Open Book"])])]);
+  })]), books.length === 0 && __jacJsx("div", {"style": {"textAlign": "center", "padding": "40px"}}, [__jacJsx("div", {"style": {"fontSize": "48px", "color": "#d1d5db", "marginBottom": "20px"}}, ["📚"]), __jacJsx("h3", {"style": {"color": "#6b7280", "marginBottom": "10px"}}, ["No Books Yet"]), __jacJsx("p", {"style": {"color": "#9ca3af"}}, ["You don't have access to any books yet. ", "Ask your tutor to share books with you or explore available courses."])])])])])]);
 }
 function LoginPage() {
   let [email, setEmail] = useState("");

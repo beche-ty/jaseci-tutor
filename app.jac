@@ -2088,6 +2088,121 @@ walker get_student_progress {
 # STUDENT DASHBOARD WALKERS
 # ============================================================================
 
+walker get_student_books {
+    has user_email: str;
+    
+    can get with `root entry {
+        # Get student's accessible chapters
+        accessible_chapters = [];
+        
+        # Find all chapters the student can access
+        for node in [-->(`?Chapter)] {
+            chapter = node;
+            
+            # Check if student has access to this chapter
+            has_access = false;
+            for access in [chapter --> `StudentAccess] {
+                if access.student_email == self.user_email {
+                    has_access = true;
+                    break;
+                }
+            }
+            
+            if has_access and chapter.is_published {
+                # Get book info
+                book = none;
+                for b in [-->(`?Book)] {
+                    if b.id == chapter.book_id {
+                        book = b;
+                        break;
+                    }
+                }
+                
+                # Get student progress for this chapter
+                progress = none;
+                for p in [chapter --> `StudentProgress] {
+                    if p.student_email == self.user_email {
+                        progress = p;
+                        break;
+                    }
+                }
+                
+                # Add chapter info
+                accessible_chapters.append({
+                    "chapter_id": chapter.id,
+                    "book_id": chapter.book_id,
+                    "book_title": book.title if book else "Unknown Book",
+                    "book_color": book.color if book else "#7c3aed",
+                    "chapter_title": chapter.title,
+                    "description": chapter.description,
+                    "progress": {
+                        "completed": progress.completed if progress else false,
+                        "quiz_score": progress.quiz_score if progress else 0,
+                        "last_viewed": progress.last_viewed if progress else null
+                    } if progress else null
+                });
+            }
+        }
+        
+        # Group chapters by book
+        books_map = {};
+        for chapter in accessible_chapters {
+            book_id = chapter.book_id;
+            if book_id not in books_map {
+                books_map[book_id] = {
+                    "book_id": book_id,
+                    "title": chapter.book_title,
+                    "color": chapter.book_color,
+                    "chapters": [],
+                    "total_chapters": 0,
+                    "completed_chapters": 0
+                };
+            }
+            
+            books_map[book_id].chapters.append({
+                "id": chapter.chapter_id,
+                "title": chapter.chapter_title,
+                "description": chapter.description,
+                "progress": chapter.progress
+            });
+            
+            books_map[book_id].total_chapters += 1;
+            if chapter.progress and chapter.progress.completed {
+                books_map[book_id].completed_chapters += 1;
+            }
+        }
+        
+        # Convert map to list and calculate completion percentage
+        books_list = [];
+        for book_data in books_map.values() {
+            completion_percent = 0;
+            if book_data.total_chapters > 0 {
+                completion_percent = Math.round((book_data.completed_chapters / book_data.total_chapters) * 100);
+            }
+            
+            books_list.push({
+                "bookId": book_data.book_id,
+                "title": book_data.title,
+                "description":book_data.description,
+                "subject": "General",
+                "color": book_data.color,
+                "chapters": book_data.chapters,
+                "progress": {
+                    "totalChapters": book_data.total_chapters,
+                    "completedChapters": book_data.completed_chapters,
+                    "completionPercentage": completion_percent
+                },
+                "createdBy": "Tutor",
+                "createdAt": now_iso(),
+                "updatedAt": now_iso()
+            });
+        }
+        
+        # Report as an array in reports field (matching frontend expectation)
+        report books_list;
+    }
+}
+
 walker get_student_available_content {
     has student_email: str;
     
@@ -2205,17 +2320,12 @@ walker get_chapter_for_student {
             return;
         }
         
-        # Check if student has access
-        has_access = false;
-        for access in [chapter --> `StudentAccess] {
-            if access.student_email == self.student_email {
-                has_access = True;
-                break;
-            }
-        }
+        # REMOVED: Access check - No longer checking StudentAccess
+        # All chapters are now accessible to all students
         
-        if not has_access {
-            report {"success": false, "error": "Access denied"};
+        # Only check if chapter is published
+        if not chapter.is_published {
+            report {"success": false, "error": "Chapter not published yet"};
             return;
         }
         

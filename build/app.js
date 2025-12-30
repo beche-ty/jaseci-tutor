@@ -2603,10 +2603,18 @@ function DashboardPage() {
     _useState36 = _slicedToArray(_useState35, 2),
     recentLessons = _useState36[0],
     setRecentLessons = _useState36[1];
-  var _useState37 = useState(true),
+  var _useState37 = useState([]),
     _useState38 = _slicedToArray(_useState37, 2),
-    loading = _useState38[0],
-    setLoading = _useState38[1];
+    books = _useState38[0],
+    setBooks = _useState38[1];
+  var _useState39 = useState(true),
+    _useState40 = _slicedToArray(_useState39, 2),
+    loading = _useState40[0],
+    setLoading = _useState40[1];
+  var _useState41 = useState("overview"),
+    _useState42 = _slicedToArray(_useState41, 2),
+    activeTab = _useState42[0],
+    setActiveTab = _useState42[1];
   useEffect(function () {
     function loadUserInfo() {
       return _loadUserInfo4.apply(this, arguments);
@@ -2650,14 +2658,15 @@ function DashboardPage() {
     }
     function _loadData2() {
       _loadData2 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10() {
-        var statsResult, statsData, lessonsResult;
+        var statsResult, statsData, lessonsResult, booksResult;
         return _regenerator().w(function (_context10) {
           while (1) switch (_context10.n) {
             case 0:
               if (!(userInfo && userInfo.email)) {
-                _context10.n = 3;
+                _context10.n = 4;
                 break;
               }
+              setLoading(true);
               _context10.n = 1;
               return __jacSpawn("get_student_progress_summary", "", {
                 "user_email": userInfo.email
@@ -2684,8 +2693,17 @@ function DashboardPage() {
               if (lessonsResult.reports && lessonsResult.reports.length > 0) {
                 setRecentLessons(lessonsResult.reports[0]);
               }
-              setLoading(false);
+              _context10.n = 3;
+              return __jacSpawn("get_student_books", "", {
+                "user_email": userInfo.email
+              });
             case 3:
+              booksResult = _context10.v;
+              if (booksResult.reports && booksResult.reports.length > 0) {
+                setBooks(booksResult.reports[0]);
+              }
+              setLoading(false);
+            case 4:
               return _context10.a(2);
           }
         }, _callee10);
@@ -2694,6 +2712,69 @@ function DashboardPage() {
     }
     loadData();
   }, [userInfo]);
+  function loadBookChapters(bookId) {
+    function loadChapters() {
+      return _loadChapters.apply(this, arguments);
+    }
+    function _loadChapters() {
+      _loadChapters = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11() {
+        var chaptersResult;
+        return _regenerator().w(function (_context11) {
+          while (1) switch (_context11.n) {
+            case 0:
+              if (!(userInfo && userInfo.email)) {
+                _context11.n = 2;
+                break;
+              }
+              _context11.n = 1;
+              return __jacSpawn("get_chapter_for_student", "", {
+                "user_email": userInfo.email,
+                "book_id": bookId
+              });
+            case 1:
+              chaptersResult = _context11.v;
+              if (chaptersResult.reports && chaptersResult.reports.length > 0) {
+                setBooks(function (prevBooks) {
+                  var updatedBooks = [];
+                  var _iterator23 = _createForOfIteratorHelper(prevBooks),
+                    _step23;
+                  try {
+                    for (_iterator23.s(); !(_step23 = _iterator23.n()).done;) {
+                      var book = _step23.value;
+                      if (book.id === bookId) {
+                        var updatedBook = {
+                          "id": book.id,
+                          "title": book.title,
+                          "description": book.description,
+                          "subject": book.subject,
+                          "color": book.color,
+                          "created_by": book.created_by,
+                          "chapter_count": book.chapter_count,
+                          "chapters": chaptersResult.reports[0],
+                          "chaptersLoaded": true
+                        };
+                        updatedBooks.append(updatedBook);
+                      } else {
+                        updatedBooks.append(book);
+                      }
+                      return updatedBooks;
+                    }
+                  } catch (err) {
+                    _iterator23.e(err);
+                  } finally {
+                    _iterator23.f();
+                  }
+                });
+              }
+            case 2:
+              return _context11.a(2);
+          }
+        }, _callee11);
+      }));
+      return _loadChapters.apply(this, arguments);
+    }
+    loadChapters();
+  }
   if (loading || !userInfo) {
     return __jacJsx("div", {
       "style": {
@@ -2730,12 +2811,53 @@ function DashboardPage() {
       "flex": "1",
       "padding": "30px"
     }
+  }, [__jacJsx("div", {
+    "style": {
+      "display": "flex",
+      "justifyContent": "space-between",
+      "alignItems": "center",
+      "marginBottom": "30px"
+    }
   }, [__jacJsx("h1", {
     "style": {
       "color": "#1f2937",
-      "marginBottom": "30px"
+      "margin": "0"
     }
   }, ["Welcome back, ", userInfo.name, "!"]), __jacJsx("div", {
+    "style": {
+      "display": "flex",
+      "gap": "10px",
+      "background": "#e5e7eb",
+      "padding": "5px",
+      "borderRadius": "8px"
+    }
+  }, [__jacJsx("button", {
+    "onClick": function onClick() {
+      return setActiveTab("overview");
+    },
+    "style": {
+      "padding": "8px 16px",
+      "background": activeTab === "overview" ? "white" : "transparent",
+      "border": "none",
+      "borderRadius": "6px",
+      "cursor": "pointer",
+      "fontWeight": activeTab === "overview" ? "bold" : "normal",
+      "color": activeTab === "overview" ? "#1f2937" : "#6b7280"
+    }
+  }, ["Overview"]), __jacJsx("button", {
+    "onClick": function onClick() {
+      return setActiveTab("books");
+    },
+    "style": {
+      "padding": "8px 16px",
+      "background": activeTab === "books" ? "white" : "transparent",
+      "border": "none",
+      "borderRadius": "6px",
+      "cursor": "pointer",
+      "fontWeight": activeTab === "books" ? bold : "normal",
+      "color": activeTab === "books" ? "#1f2937" : "#6b7280"
+    }
+  }, ["My Books (", books.length, ")"])])]), activeTab === "overview" && __jacJsx(null, {}, [__jacJsx("div", {
     "style": {
       "display": "grid",
       "gridTemplateColumns": "repeat(2, 1fr)",
@@ -2900,55 +3022,225 @@ function DashboardPage() {
         "fontSize": "12px"
       }
     }, [lessonScore])])]);
-  }), recentLessons.length === 0 && __jacJsx("div", {}, ["No lessons available"])])])])])]);
+  }), recentLessons.length === 0 && __jacJsx("div", {}, ["No lessons available"])])])]), activeTab === "books" && __jacJsx("div", {
+    "style": {
+      "background": "white",
+      "padding": "25px",
+      "borderRadius": "10px",
+      "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"
+    }
+  }, [__jacJsx("h2", {
+    "style": {
+      "color": "#1f2937",
+      "marginBottom": "20px"
+    }
+  }, ["My Books"]), books.length > 0 && __jacJsx("div", {
+    "style": {
+      "display": "grid",
+      "gridTemplateColumns": "repeat(auto-fill, minmax(300px, 1fr))",
+      "gap": "20px"
+    }
+  }, [books.map(function (book) {
+    return __jacJsx("div", {
+      "key": book.id,
+      "style": {
+        "border": "1px solid #e5e7eb",
+        "borderRadius": "10px",
+        "overflow": "hidden",
+        "background": "white"
+      }
+    }, [__jacJsx("div", {
+      "style": {
+        "height": "120px",
+        "background": book.color || "#4361ee",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      }
+    }, [__jacJsx("span", {
+      "style": {
+        "color": "white",
+        "fontSize": "32px",
+        "fontWeight": "bold"
+      }
+    }, [book.title.slice(0, 1).toUpperCase()])]), __jacJsx("div", {
+      "style": {
+        "padding": "20px"
+      }
+    }, [__jacJsx("h3", {
+      "style": {
+        "color": "#1f2937",
+        "marginBottom": "10px"
+      }
+    }, [book.title]), __jacJsx("p", {
+      "style": {
+        "color": "#6b7280",
+        "fontSize": "14px",
+        "marginBottom": "15px"
+      }
+    }, [book.description || "No description"]), __jacJsx("div", {
+      "style": {
+        "display": "flex",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "marginBottom": "15px"
+      }
+    }, [__jacJsx("span", {
+      "style": {
+        "color": "#9ca3af",
+        "fontSize": "12px"
+      }
+    }, [book.chapter_count || 0, " chapters"]), __jacJsx("span", {
+      "style": {
+        "color": "#9ca3af",
+        "fontSize": "12px"
+      }
+    }, ["Subject: ", book.subject || "General"])]), book.chaptersLoaded && __jacJsx("div", {
+      "style": {
+        "marginTop": "15px",
+        "borderTop": "1px solid #e5e7eb",
+        "paddingTop": "15px"
+      }
+    }, [__jacJsx("h4", {
+      "style": {
+        "color": "#4b5563",
+        "fontSize": "14px",
+        "marginBottom": "10px"
+      }
+    }, ["Chapters:"]), book.chapters && book.chapters.length > 0 && __jacJsx("div", {
+      "style": {
+        "display": "flex",
+        "flexDirection": "column",
+        "gap": "8px"
+      }
+    }, [book.chapters.map(function (chapter) {
+      return __jacJsx("div", {
+        "key": chapter.id,
+        "style": {
+          "padding": "8px",
+          "background": "#f9fafb",
+          "borderRadius": "6px",
+          "cursor": "pointer",
+          "display": "flex",
+          "justifyContent": "space-between",
+          "alignItems": "center"
+        },
+        "onClick": window.location.href("/chapter/" + chapter.id)
+      }, [__jacJsx("span", {
+        "style": {
+          "fontSize": "14px",
+          "color": "#374151"
+        }
+      }, [chapter.order, ". ", chapter.title]), __jacJsx("span", {
+        "style": {
+          "fontSize": "12px",
+          "color": "#9ca3af"
+        }
+      }, [chapter.is_published ? "Published" : new Set(["Draft"])])]);
+    })]), !book.chapters || book.chapters.length === 0 && __jacJsx("div", {
+      "style": {
+        "color": "#9ca3af",
+        "fontSize": "14px",
+        "textAlign": "center",
+        "padding": "10px"
+      }
+    }, ["No chapters available"])]), !book.chaptersLoaded && __jacJsx("button", {
+      "onClick": function onClick() {
+        return loadBookChapters(book.id);
+      },
+      "style": {
+        "width": "100%",
+        "padding": "10px",
+        "background": "#f3f4f6",
+        "border": "1px solid #d1d5db",
+        "borderRadius": "6px",
+        "color": "#4b5563",
+        "cursor": "pointer",
+        "fontSize": "14px"
+      }
+    }, ["Show Chapters"]), __jacJsx("button", {
+      "onClick": window.location.href("/books/" + book.id),
+      "style": {
+        "width": "100%",
+        "marginTop": "15px",
+        "padding": "10px",
+        "background": "#4361ee",
+        "color": "white",
+        "border": "none",
+        "borderRadius": "6px",
+        "cursor": "pointer",
+        "fontWeight": "bold"
+      }
+    }, ["Open Book"])])]);
+  })]), books.length === 0 && __jacJsx("div", {
+    "style": {
+      "textAlign": "center",
+      "padding": "40px"
+    }
+  }, [__jacJsx("div", {
+    "style": {
+      "fontSize": "48px",
+      "color": "#d1d5db",
+      "marginBottom": "20px"
+    }
+  }, ["📚"]), __jacJsx("h3", {
+    "style": {
+      "color": "#6b7280",
+      "marginBottom": "10px"
+    }
+  }, ["No Books Yet"]), __jacJsx("p", {
+    "style": {
+      "color": "#9ca3af"
+    }
+  }, ["You don't have access to any books yet. ", "Ask your tutor to share books with you or explore available courses."])])])])])]);
 }
 function LoginPage() {
-  var _useState39 = useState(""),
-    _useState40 = _slicedToArray(_useState39, 2),
-    email = _useState40[0],
-    setEmail = _useState40[1];
-  var _useState41 = useState(""),
-    _useState42 = _slicedToArray(_useState41, 2),
-    password = _useState42[0],
-    setPassword = _useState42[1];
   var _useState43 = useState(""),
     _useState44 = _slicedToArray(_useState43, 2),
-    error = _useState44[0],
-    setError = _useState44[1];
+    email = _useState44[0],
+    setEmail = _useState44[1];
+  var _useState45 = useState(""),
+    _useState46 = _slicedToArray(_useState45, 2),
+    password = _useState46[0],
+    setPassword = _useState46[1];
+  var _useState47 = useState(""),
+    _useState48 = _slicedToArray(_useState47, 2),
+    error = _useState48[0],
+    setError = _useState48[1];
   var navigate = useNavigate();
   function handleLogin(_x7) {
     return _handleLogin.apply(this, arguments);
   }
   function _handleLogin() {
-    _handleLogin = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11(e) {
+    _handleLogin = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(e) {
       var success, _result9, sessionData, userRole, errorMsg;
-      return _regenerator().w(function (_context11) {
-        while (1) switch (_context11.n) {
+      return _regenerator().w(function (_context12) {
+        while (1) switch (_context12.n) {
           case 0:
             e.preventDefault();
             setError("");
             if (!(!email || !password)) {
-              _context11.n = 1;
+              _context12.n = 1;
               break;
             }
             setError("Please fill in all fields");
-            return _context11.a(2);
+            return _context12.a(2);
           case 1:
-            _context11.n = 2;
+            _context12.n = 2;
             return jacLogin(email, password);
           case 2:
-            success = _context11.v;
+            success = _context12.v;
             if (!success) {
-              _context11.n = 4;
+              _context12.n = 4;
               break;
             }
-            _context11.n = 3;
+            _context12.n = 3;
             return __jacSpawn("login_user", "", {
               "email": email,
               "password": password
             });
           case 3:
-            _result9 = _context11.v;
+            _result9 = _context12.v;
             if (_result9.reports && _result9.reports.length > 0 && _result9.reports[0].success) {
               sessionData = _result9.reports[0];
               localStorage.setItem("session_id", sessionData.session_id);
@@ -2971,14 +3263,14 @@ function LoginPage() {
               }
               setError(errorMsg);
             }
-            _context11.n = 5;
+            _context12.n = 5;
             break;
           case 4:
             setError("Invalid email or password");
           case 5:
-            return _context11.a(2);
+            return _context12.a(2);
         }
-      }, _callee11);
+      }, _callee12);
     }));
     return _handleLogin.apply(this, arguments);
   }
@@ -3063,76 +3355,76 @@ function LoginPage() {
   }, ["Sign up"])])])]);
 }
 function SignupPage() {
-  var _useState45 = useState(""),
-    _useState46 = _slicedToArray(_useState45, 2),
-    email = _useState46[0],
-    setEmail = _useState46[1];
-  var _useState47 = useState(""),
-    _useState48 = _slicedToArray(_useState47, 2),
-    password = _useState48[0],
-    setPassword = _useState48[1];
   var _useState49 = useState(""),
     _useState50 = _slicedToArray(_useState49, 2),
-    name = _useState50[0],
-    setName = _useState50[1];
-  var _useState51 = useState("student"),
+    email = _useState50[0],
+    setEmail = _useState50[1];
+  var _useState51 = useState(""),
     _useState52 = _slicedToArray(_useState51, 2),
-    role = _useState52[0],
-    setRole = _useState52[1];
+    password = _useState52[0],
+    setPassword = _useState52[1];
   var _useState53 = useState(""),
     _useState54 = _slicedToArray(_useState53, 2),
-    error = _useState54[0],
-    setError = _useState54[1];
+    name = _useState54[0],
+    setName = _useState54[1];
+  var _useState55 = useState("student"),
+    _useState56 = _slicedToArray(_useState55, 2),
+    role = _useState56[0],
+    setRole = _useState56[1];
+  var _useState57 = useState(""),
+    _useState58 = _slicedToArray(_useState57, 2),
+    error = _useState58[0],
+    setError = _useState58[1];
   var navigate = useNavigate();
   function handleSignup(_x8) {
     return _handleSignup.apply(this, arguments);
   }
   function _handleSignup() {
-    _handleSignup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(e) {
+    _handleSignup = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(e) {
       var result, profileResult, success, loginResult, sessionData;
-      return _regenerator().w(function (_context12) {
-        while (1) switch (_context12.n) {
+      return _regenerator().w(function (_context13) {
+        while (1) switch (_context13.n) {
           case 0:
             e.preventDefault();
             setError("");
             if (!(!email || !password || !name)) {
-              _context12.n = 1;
+              _context13.n = 1;
               break;
             }
             setError("Please fill in all fields");
-            return _context12.a(2);
+            return _context13.a(2);
           case 1:
-            _context12.n = 2;
+            _context13.n = 2;
             return jacSignup(email, password);
           case 2:
-            result = _context12.v;
+            result = _context13.v;
             if (!result["success"]) {
-              _context12.n = 7;
+              _context13.n = 7;
               break;
             }
-            _context12.n = 3;
+            _context13.n = 3;
             return __jacSpawn("create_user_profile", "", {
               "email": email,
               "name": name,
               "role": role
             });
           case 3:
-            profileResult = _context12.v;
-            _context12.n = 4;
+            profileResult = _context13.v;
+            _context13.n = 4;
             return jacLogin(email, password);
           case 4:
-            success = _context12.v;
+            success = _context13.v;
             if (!success) {
-              _context12.n = 6;
+              _context13.n = 6;
               break;
             }
-            _context12.n = 5;
+            _context13.n = 5;
             return __jacSpawn("login_user", "", {
               "email": email,
               "password": password
             });
           case 5:
-            loginResult = _context12.v;
+            loginResult = _context13.v;
             if (loginResult.reports && loginResult.reports.length > 0 && loginResult.reports[0].success) {
               sessionData = loginResult.reports[0];
               localStorage.setItem("session_id", sessionData.session_id);
@@ -3146,14 +3438,14 @@ function SignupPage() {
               }
             }
           case 6:
-            _context12.n = 8;
+            _context13.n = 8;
             break;
           case 7:
             setError(result["error"] ? result["error"] : "Signup failed");
           case 8:
-            return _context12.a(2);
+            return _context13.a(2);
         }
-      }, _callee12);
+      }, _callee13);
     }));
     return _handleSignup.apply(this, arguments);
   }
