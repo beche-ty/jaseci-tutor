@@ -1959,7 +1959,7 @@ cl {
                                     "border": "none",
                                     "borderRadius": "6px",
                                     "cursor": "pointer",
-                                    "fontWeight": bold if activeTab == "books" else "normal",
+                                    "fontWeight": "bold" if activeTab == "books" else "normal",
                                     "color": "#1f2937"  if activeTab == "books" else  "#6b7280"
                                 }}
                             >

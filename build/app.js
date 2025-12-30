@@ -2854,7 +2854,7 @@ function DashboardPage() {
       "border": "none",
       "borderRadius": "6px",
       "cursor": "pointer",
-      "fontWeight": activeTab === "books" ? bold : "normal",
+      "fontWeight": activeTab === "books" ? "bold" : "normal",
       "color": activeTab === "books" ? "#1f2937" : "#6b7280"
     }
   }, ["My Books (", books.length, ")"])])]), activeTab === "overview" && __jacJsx(null, {}, [__jacJsx("div", {
